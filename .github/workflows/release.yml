@@ -50,9 +50,6 @@ jobs:
   windows:
     name: Windows (.exe)
     runs-on: windows-latest
-    defaults:
-      run:
-        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -64,15 +61,20 @@ jobs:
           version: ${{ env.QT_VERSION }}
           arch: win64_msvc2019_64
           cache: true
+      # PowerShell (no el bash de Git): en bash, link.exe se resuelve al "link" de las utilidades de
+      # Git en lugar del enlazador de Visual Studio.
       - name: Terminal (resonda.exe)
+        shell: pwsh
         run: cargo build --release
       - name: Ventana (resonda-gui.exe)
         # Si la ventana falla en Windows, la terminal se publica igualmente
         continue-on-error: true
+        shell: pwsh
         run: |
-          cmake -S gui -B gui/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+          cmake -S gui -B gui/build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_PREFIX_PATH=$env:QT_ROOT_DIR"
           cmake --build gui/build
       - name: Empaquetar
+        shell: bash
         run: |
           VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
           OUT="Resonda-$VERSION-windows-x64"
