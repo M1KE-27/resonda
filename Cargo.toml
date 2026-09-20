@@ -1,0 +1,29 @@
+[package]
+name = "resonda"
+version = "1.0.0"
+edition = "2021"
+description = "Descarga vídeos y música de YouTube y Spotify. Código propio, sin yt-dlp ni ffmpeg."
+license = "MIT"
+readme = "README.md"
+
+[lib]
+name = "resonda"
+path = "src/lib.rs"
+crate-type = ["rlib", "staticlib"] # staticlib: para enlazar la GUI de Qt (API C en include/resonda.h)
+
+[[bin]]
+name = "resonda"
+path = "src/main.rs"
+
+[dependencies]
+ureq = { version = "3", default-features = false, features = ["rustls", "json"] }
+serde_json = "1"
+symphonia-codec-aac = { version = "0.6.1", default-features = false }
+symphonia-core = { version = "0.6.1", default-features = false }
+rusty_mp3 = { version = "0.8", default-features = false }
+
+[profile.release]
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
+strip = true

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Resonda
+GenericName=Descargador de vídeo y música
+Comment=Descarga vídeos y música de YouTube y Spotify
+Exec=resonda-gui %u
+Icon=resonda
+Terminal=false
+Categories=AudioVideo;Audio;Network;
+Keywords=youtube;spotify;mp3;flac;mp4;download;descargar;
+StartupWMClass=resonda

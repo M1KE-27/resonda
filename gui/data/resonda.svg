@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <title>Resonda</title>
+  <defs>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#17171d"/><stop offset="1" stop-color="#2a1c3a"/></linearGradient>
+    <linearGradient id="w" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a4f"/><stop offset="0.55" stop-color="#ff4d9a"/><stop offset="1" stop-color="#8b5cf6"/></linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#b)"/>
+  <rect x="24.5" y="111.0" width="15" height="34.0" rx="7.5" fill="url(#w)"/><rect x="48.5" y="85.7" width="15" height="84.5" rx="7.5" fill="url(#w)"/><rect x="72.5" y="75.6" width="15" height="104.8" rx="7.5" fill="url(#w)"/><rect x="96.5" y="65.6" width="15" height="124.7" rx="7.5" fill="url(#w)"/><rect x="120.5" y="51.1" width="15" height="153.8" rx="7.5" fill="url(#w)"/><rect x="144.5" y="69.1" width="15" height="117.8" rx="7.5" fill="url(#w)"/><rect x="168.5" y="73.1" width="15" height="109.8" rx="7.5" fill="url(#w)"/><rect x="192.5" y="86.0" width="15" height="83.9" rx="7.5" fill="url(#w)"/><rect x="216.5" y="111.0" width="15" height="34.0" rx="7.5" fill="url(#w)"/>
+</svg>

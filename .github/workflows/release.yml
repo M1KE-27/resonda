@@ -1,0 +1,120 @@
+# Compila y publica Resonda al subir una etiqueta "v*" (por ejemplo: git tag v1.0.0 && git push --tags).
+# También se puede lanzar a mano desde la pestaña Actions para probar (sin publicar).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  QT_VERSION: "6.7.3"
+
+jobs:
+  linux:
+    name: Linux (AppImage, .deb, .tar.gz)
+    # Ubuntu 22.04: los binarios funcionan en cualquier distro con glibc >= 2.35
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          arch: linux_gcc_64
+          cache: true
+      - name: Dependencias del sistema
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build desktop-file-utils libfuse2 libgl1-mesa-dev libegl1-mesa-dev \
+            libxkbcommon-dev libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xkb1 libwayland-dev
+      - name: Paquetes
+        env:
+          QMAKE: ${{ env.QT_ROOT_DIR }}/bin/qmake
+          CMAKE_PREFIX_PATH: ${{ env.QT_ROOT_DIR }}
+          LD_LIBRARY_PATH: ${{ env.QT_ROOT_DIR }}/lib
+        run: packaging/build-linux.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.tar.gz
+
+  windows:
+    name: Windows (.exe)
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: ilammy/setup-nasm@v1
+      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{ env.QT_VERSION }}
+          arch: win64_msvc2019_64
+          cache: true
+      - name: Terminal (resonda.exe)
+        run: cargo build --release
+      - name: Ventana (resonda-gui.exe)
+        # Si la ventana falla en Windows, la terminal se publica igualmente
+        continue-on-error: true
+        run: |
+          cmake -S gui -B gui/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$QT_ROOT_DIR"
+          cmake --build gui/build
+      - name: Empaquetar
+        run: |
+          VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          OUT="Resonda-$VERSION-windows-x64"
+          mkdir -p "$OUT"
+          cp target/release/resonda.exe LICENSE README.md "$OUT/"
+          if [ -f gui/build/resonda-gui.exe ]; then
+            cp gui/build/resonda-gui.exe "$OUT/"
+            "$QT_ROOT_DIR/bin/windeployqt.exe" --release --qmldir gui/qml "$OUT/resonda-gui.exe"
+          else
+            echo "::warning::La ventana no se compiló: el paquete solo lleva la terminal"
+          fi
+          7z a "$OUT.zip" "$OUT" > /dev/null
+          ls -la "$OUT.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: Resonda-*-windows-x64.zip
+
+  release:
+    name: Publicar
+    needs: [linux, windows]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Sumas de comprobación
+        run: cd artifacts && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          body: |
+            ## Descargas
+            | Sistema | Archivo |
+            |---|---|
+            | Linux (cualquier distro) | `Resonda-*-x86_64.AppImage`: la ventana, portable |
+            | Debian / Ubuntu y derivadas | `resonda_*_amd64.deb`: terminal y ventana |
+            | Linux, solo terminal | `resonda-cli-*-linux-x86_64.tar.gz` |
+            | Windows | `Resonda-*-windows-x64.zip` con `resonda.exe` (terminal) y `resonda-gui.exe` (ventana) |
+
+            AppImage: `chmod +x Resonda-*.AppImage && ./Resonda-*.AppImage`.
+            Comprueba los archivos con `SHA256SUMS.txt`. Resonda es libre (MIT) y no incluye yt-dlp ni ffmpeg.

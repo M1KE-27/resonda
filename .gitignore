@@ -1,0 +1,6 @@
+# Compilación, paquetes y herramientas de empaquetado (se regeneran)
+/target
+/gui/build
+/dist
+/packaging/.cache
+/packaging/.stage
